@@ -46,21 +46,12 @@ jobs:
           echo '<html><body></body></html>' > www/index.html
           npx cap sync android
 
-      - name: Restaurar icono desde base64
-        run: |
-          mkdir -p assets
-          if [ -f assets/icon.b64 ]; then
-            echo "Decodificando icono..."
-            base64 -d assets/icon.b64 > assets/icon.png
-            echo "Icono restaurado: $(stat -c%s assets/icon.png) bytes"
-          fi
-
       - name: Copiar icono personalizado
         run: |
           if [ -f assets/icon.png ]; then
-            echo "Usando icono personalizado"
+            echo "✅ Usando icono personalizado"
             for dir in android/app/src/main/res/mipmap-*; do
-              # Excluir mipmap-anydpi-v26 porque solo debe tener archivos .xml (adaptive icons)
+              # Excluir mipmap-anydpi-v26 porque solo debe tener archivos .xml
               if [[ "$dir" != *"anydpi-v26"* ]]; then
                 cp assets/icon.png "$dir/ic_launcher.png" 2>/dev/null || true
                 cp assets/icon.png "$dir/ic_launcher_round.png" 2>/dev/null || true
@@ -69,7 +60,7 @@ jobs:
             mkdir -p android/app/src/main/res/drawable
             cp assets/icon.png android/app/src/main/res/drawable/ic_launcher_foreground.png 2>/dev/null || true
           else
-            echo "No hay icono, se usará el de Android por defecto"
+            echo "⚠️ No hay icono, se usará el de Android por defecto"
           fi
 
       - name: Generar keystore (debug, auto-firmada)
@@ -113,7 +104,7 @@ jobs:
             1. Descarga el archivo `acex-search-play.apk`
             2. En Android: ajustes → permitir instalar apps de origen desconocido
             3. Abre el archivo .apk desde el gestor de descargas
-            4. Instala y abre. La app cargará https://acex-search-play.vercel.app
+            4. Instala y abre. La app cargará https://xuperlist-acex-search-play.vercel.app
 
             ## Permisos
             - INTERNET (necesario para cargar la web)
