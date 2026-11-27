@@ -46,31 +46,24 @@ jobs:
           echo '<html><body></body></html>' > www/index.html
           npx cap sync android
 
-      - name: Copiar icono personalizado
+      - name: Preparar icono fuente
         run: |
           if [ -f assets/icon.png ]; then
-            echo "✅ Usando icono personalizado"
-            # Copiar el PNG a todas las carpetas mipmap (Android lo redimensiona solo)
-            for dir in android/app/src/main/res/mipmap-*; do
-              # Excluir anydpi-v26 (lo tratamos aparte)
-              if [[ "$dir" != *"anydpi-v26"* ]]; then
-                cp assets/icon.png "$dir/ic_launcher.png" 2>/dev/null || true
-                cp assets/icon.png "$dir/ic_launcher_round.png" 2>/dev/null || true
-                echo "  ✅ Copiado a $dir"
-              fi
-            done
-            # anydpi-v26: quitar XML y poner PNG (evita duplicados y usa el icono real)
-            rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-            rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
-            cp assets/icon.png android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.png 2>/dev/null || true
-            cp assets/icon.png android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.png 2>/dev/null || true
-            echo "  ✅ anydpi-v26 actualizado"
-            # Foreground para splash
-            mkdir -p android/app/src/main/res/drawable
-            cp assets/icon.png android/app/src/main/res/drawable/ic_launcher_foreground.png 2>/dev/null || true
-            echo "✅ Icono copiado a todas las carpetas"
+            cp assets/icon.png icon.png
+            echo "✅ Icono fuente: $(stat -c%s icon.png) bytes"
           else
-            echo "⚠️ No hay icono, se usará el de Android por defecto"
+            echo "⚠️ No existe assets/icon.png"
+          fi
+
+      - name: Generar iconos con @capacitor/assets
+        run: |
+          if [ -f icon.png ]; then
+            echo "✅ Generando adaptive icons con @capacitor/assets"
+            npm install -D @capacitor/assets
+            npx @capacitor/assets generate --android --icon-only
+            echo "✅ Adaptive icons generados correctamente"
+          else
+            echo "⚠️ Sin icono, se usará el de Android por defecto"
           fi
 
       - name: Generar keystore (debug, auto-firmada)
@@ -79,7 +72,6 @@ jobs:
             -keystore android/app/debug.keystore \
             -alias androiddebugkey \
             -storepass android \
-            -keypass android \
             -keyalg RSA \
             -keysize 2048 \
             -validity 10000 \
