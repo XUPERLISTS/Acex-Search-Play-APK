@@ -1,0 +1,119 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Instalar Capacitor CLI
+        run: npm install -g @capacitor/cli
+
+      - name: Añadir plataforma Android
+        run: npx cap add android || true
+
+      - name: Copiar configuración y assets
+        run: |
+          mkdir -p www
+          echo '<html><body></body></html>' > www/index.html
+          npx cap sync android
+
+      - name: Restaurar icono desde base64
+        run: |
+          mkdir -p assets
+          if [ -f assets/icon.b64 ]; then
+            echo "Decodificando icono..."
+            base64 -d assets/icon.b64 > assets/icon.png
+            echo "Icono restaurado: $(stat -c%s assets/icon.png) bytes"
+          fi
+
+      - name: Copiar icono personalizado
+        run: |
+          if [ -f assets/icon.png ]; then
+            echo "Usando icono personalizado"
+            for dir in android/app/src/main/res/mipmap-*; do
+              cp assets/icon.png "$dir/ic_launcher.png" 2>/dev/null || true
+              cp assets/icon.png "$dir/ic_launcher_round.png" 2>/dev/null || true
+            done
+            mkdir -p android/app/src/main/res/drawable
+            cp assets/icon.png android/app/src/main/res/drawable/ic_launcher_foreground.png 2>/dev/null || true
+          else
+            echo "No hay icono, se usará el de Android por defecto"
+          fi
+
+      - name: Generar keystore (debug, auto-firmada)
+        run: |
+          keytool -genkeypair \
+            -keystore android/app/debug.keystore \
+            -alias androiddebugkey \
+            -storepass android \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Acex Search Play, OU=Dev, O=Xuperlists, L=Madrid, S=Madrid, C=ES"
+
+      - name: Compilar APK (debug)
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon -x lint
+
+      - name: Renombrar APK
+        run: |
+          mkdir -p output
+          cp android/app/build/outputs/apk/debug/app-debug.apk output/acex-search-play.apk
+
+      - name: Subir APK como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: acex-search-play-apk
+          path: output/acex-search-play.apk
+          retention-days: 90
+
+      - name: Crear Release en GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Acex Search Play v${{ github.run_number }}
+          body: |
+            APK generada automáticamente desde el commit ${{ github.sha }}
+
+            ## Instalación
+
+            1. Descarga el archivo `acex-search-play.apk`
+            2. En Android: ajustes → permitir instalar apps de origen desconocido
+            3. Abre el archivo .apk desde el gestor de descargas
+            4. Instala y abre. La app cargará https://acex-search-play.vercel.app
+
+            ## Permisos
+            - INTERNET (necesario para cargar la web)
+            - ACCESS_NETWORK_STATE (comprobación de conexión)
+          files: output/acex-search-play.apk
+          prerelease: false
