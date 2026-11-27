@@ -51,14 +51,20 @@ jobs:
           if [ -f assets/icon.png ]; then
             echo "✅ Usando icono personalizado"
             for dir in android/app/src/main/res/mipmap-*; do
-              # Excluir mipmap-anydpi-v26 porque solo debe tener archivos .xml
               if [[ "$dir" != *"anydpi-v26"* ]]; then
                 cp assets/icon.png "$dir/ic_launcher.png" 2>/dev/null || true
                 cp assets/icon.png "$dir/ic_launcher_round.png" 2>/dev/null || true
               fi
             done
+            # Eliminar los adaptive icons XML para que Android use el PNG directamente
+            rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+            rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+            # Copiar el PNG también a anydpi-v26 (ahora solo hay PNG, sin XML, sin duplicados)
+            cp assets/icon.png android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.png 2>/dev/null || true
+            cp assets/icon.png android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.png 2>/dev/null || true
             mkdir -p android/app/src/main/res/drawable
             cp assets/icon.png android/app/src/main/res/drawable/ic_launcher_foreground.png 2>/dev/null || true
+            echo "✅ Icono copiado a todas las carpetas mipmap"
           else
             echo "⚠️ No hay icono, se usará el de Android por defecto"
           fi
