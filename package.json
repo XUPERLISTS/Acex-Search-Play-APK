@@ -1,0 +1,18 @@
+{
+  "name": "acex-search-play-apk",
+  "version": "1.0.0",
+  "description": "Wrapper APK (Capacitor) para Acex Search Play — cargada vía WebView desde Vercel.",
+  "private": true,
+  "scripts": {
+    "build": "echo \"No-op build: el contenido se sirve desde Vercel\""
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/app": "^6.0.1",
+    "@capacitor/splash-screen": "^6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}
