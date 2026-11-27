@@ -46,25 +46,30 @@ jobs:
           echo '<html><body></body></html>' > www/index.html
           npx cap sync android
 
-      - name: Copiar icono personalizado
+      - name: Copiar icono personalizado (redimensionado por densidad)
         run: |
           if [ -f assets/icon.png ]; then
             echo "✅ Usando icono personalizado"
-            for dir in android/app/src/main/res/mipmap-*; do
-              if [[ "$dir" != *"anydpi-v26"* ]]; then
-                cp assets/icon.png "$dir/ic_launcher.png" 2>/dev/null || true
-                cp assets/icon.png "$dir/ic_launcher_round.png" 2>/dev/null || true
+            # Tamaños correctos por densidad
+            declare -A sizes=( [mdpi]=48 [hdpi]=72 [xhdpi]=96 [xxhdpi]=144 [xxxhdpi]=192 )
+            for density in "${!sizes[@]}"; do
+              dir="android/app/src/main/res/mipmap-$density"
+              if [ -d "$dir" ]; then
+                size="${sizes[$density]}"
+                convert assets/icon.png -resize ${size}x${size} -background '#0e0e12' -gravity center -extent ${size}x${size} "$dir/ic_launcher.png"
+                convert assets/icon.png -resize ${size}x${size} -background '#0e0e12' -gravity center -extent ${size}x${size} "$dir/ic_launcher_round.png"
+                echo "  ✅ $dir -> ${size}x${size}"
               fi
             done
-            # Eliminar los adaptive icons XML para que Android use el PNG directamente
+            # anydpi-v26: quitar XML y poner PNG de mayor densidad (evita duplicados)
             rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
             rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
-            # Copiar el PNG también a anydpi-v26 (ahora solo hay PNG, sin XML, sin duplicados)
-            cp assets/icon.png android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.png 2>/dev/null || true
-            cp assets/icon.png android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.png 2>/dev/null || true
+            convert assets/icon.png -resize 192x192 -background '#0e0e12' -gravity center -extent 192x192 android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.png
+            convert assets/icon.png -resize 192x192 -background '#0e0e12' -gravity center -extent 192x192 android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.png
+            # Foreground para splash/drawable
             mkdir -p android/app/src/main/res/drawable
-            cp assets/icon.png android/app/src/main/res/drawable/ic_launcher_foreground.png 2>/dev/null || true
-            echo "✅ Icono copiado a todas las carpetas mipmap"
+            convert assets/icon.png -resize 512x512 android/app/src/main/res/drawable/ic_launcher_foreground.png
+            echo "✅ Icono redimensionado y copiado a todas las carpetas"
           else
             echo "⚠️ No hay icono, se usará el de Android por defecto"
           fi
@@ -75,7 +80,6 @@ jobs:
             -keystore android/app/debug.keystore \
             -alias androiddebugkey \
             -storepass android \
-            -keypass android \
             -keyalg RSA \
             -keysize 2048 \
             -validity 10000 \
