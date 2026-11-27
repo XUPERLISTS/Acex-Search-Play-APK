@@ -3,7 +3,7 @@
   "appName": "Acex Search Play",
   "webDir": "www",
   "server": {
-    "url": "https://acex-search-play.vercel.app",
+    "url": "https://xuperlist-acex-search-play.vercel.app/",
     "cleartext": true
   },
   "android": {
