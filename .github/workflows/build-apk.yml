@@ -46,24 +46,15 @@ jobs:
           echo '<html><body></body></html>' > www/index.html
           npx cap sync android
 
-      - name: Preparar icono fuente
-        run: |
-          if [ -f assets/icon.png ]; then
-            cp assets/icon.png icon.png
-            echo "✅ Icono fuente: $(stat -c%s icon.png) bytes"
-          else
-            echo "⚠️ No existe assets/icon.png"
-          fi
-
       - name: Generar iconos con @capacitor/assets
         run: |
-          if [ -f icon.png ]; then
+          if [ -f assets/icon.png ]; then
             echo "✅ Generando adaptive icons con @capacitor/assets"
             npm install -D @capacitor/assets
-            npx @capacitor/assets generate --android --icon-only
+            npx @capacitor/assets generate --android --no-splash
             echo "✅ Adaptive icons generados correctamente"
           else
-            echo "⚠️ Sin icono, se usará el de Android por defecto"
+            echo "⚠️ No existe assets/icon.png, se usará el de Android por defecto"
           fi
 
       - name: Generar keystore (debug, auto-firmada)
