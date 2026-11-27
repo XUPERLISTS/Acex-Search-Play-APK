@@ -1,0 +1,20 @@
+{
+  "appId": "com.xuperlists.acexsearchplay",
+  "appName": "Acex Search Play",
+  "webDir": "www",
+  "server": {
+    "url": "https://acex-search-play.vercel.app",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#0e0e12",
+      "androidSplashResourceName": "splash"
+    }
+  }
+}
