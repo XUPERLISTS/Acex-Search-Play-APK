@@ -60,8 +60,11 @@ jobs:
           if [ -f assets/icon.png ]; then
             echo "Usando icono personalizado"
             for dir in android/app/src/main/res/mipmap-*; do
-              cp assets/icon.png "$dir/ic_launcher.png" 2>/dev/null || true
-              cp assets/icon.png "$dir/ic_launcher_round.png" 2>/dev/null || true
+              # Excluir mipmap-anydpi-v26 porque solo debe tener archivos .xml (adaptive icons)
+              if [[ "$dir" != *"anydpi-v26"* ]]; then
+                cp assets/icon.png "$dir/ic_launcher.png" 2>/dev/null || true
+                cp assets/icon.png "$dir/ic_launcher_round.png" 2>/dev/null || true
+              fi
             done
             mkdir -p android/app/src/main/res/drawable
             cp assets/icon.png android/app/src/main/res/drawable/ic_launcher_foreground.png 2>/dev/null || true
